@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Sparkles, 
   Dices, 
@@ -17,8 +18,11 @@ import {
   BookOpen,
   Hash,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  FileText,
+  Lightbulb
 } from 'lucide-react';
+import { getPredictionById, hasPrediction, getPredictionStats, type DibocPrediction } from '@/lib/diboc-data';
 
 // Định nghĩa đầy đủ các chủ đề từ file text với 8 cung Bát Quái
 const TOPICS = {
@@ -153,95 +157,13 @@ const BAGUA_NAMES = {
   5: 'Tốn', 6: 'Khảm', 7: 'Cấn', 8: 'Khôn'
 };
 
-// Kết quả giải thích mẫu theo từng lĩnh vực
-const SAMPLE_INTERPRETATIONS = {
-  // Cung Càn - Về học tập, tri thức, sức khỏe
-  'mangvan': 'cho thấy vận mệnh đang trong giai đoạn chuyển biến tích cực. Đây là thời điểm thuận lợi để phát triển bản thân và nắm bắt cơ hội.',
-  'doctho': 'báo hiệu việc học tập và nghiên cứu sẽ có kết quả tốt. Trí tuệ được khai sáng, kiến thức được mở rộng.',
-  'tanhoc': 'thể hiện con đường học vấn thuận lợi. Sự chăm chỉ và kiên trì sẽ mang lại thành công trong học tập.',
-  'khocu': 'báo hiệu kết quả thi cử khả quan. Sự chăm chỉ và kiên trì sẽ được đền đáp xứng đáng.',
-  'tinhvu': 'dự báo thời tiết thuận lợi. Mưa thuận gió hòa, có lợi cho mọi hoạt động.',
-  'thuthao': 'cho thấy việc đòi nợ sẽ có kết quả. Cần kiên nhẫn và có phương pháp phù hợp.',
-  'chieute': 'thể hiện việc cưới hỏi thuận lợi. Đây là thời điểm tốt để tổ chức hôn lễ.',
-  'thinhy': 'báo hiệu sức khỏe được cải thiện. Việc tìm kiếm thầy thuốc giỏi sẽ có kết quả tích cực.',
-
-  // Cung Đoài - Về xã hội, gia đình, sức khỏe
-  'hoissu': 'cho thấy các hoạt động nhóm sẽ thành công. Sự hợp tác và đoàn kết mang lại hiệu quả cao.',
-  'muusu': 'thể hiện kế hoạch và mưu toan sẽ thành công. Cần suy nghĩ kỹ lưỡng và hành động khôn ngoan.',
-  'maioc': 'báo hiệu việc mua nhà đất thuận lợi. Đây là thời điểm tốt để đầu tư bất động sản.',
-  'dicu': 'cho thấy việc chuyển chỗ ở hoặc công việc sẽ thuận lợi. Thay đổi mang lại cơ hội mới.',
-  'phangia': 'thể hiện việc chia tài sản gia đình sẽ công bằng và hòa thuận.',
-  'thienhoa': 'cảnh báo về sức khỏe con cái. Cần chú ý chăm sóc và theo dõi sức khỏe gia đình.',
-  'phubenh': 'cho biết tình hình sức khỏe cha mẹ. Cần quan tâm và chăm sóc người thân.',
-  'benhchung': 'thể hiện tình trạng bệnh tật sẽ được cải thiện. Việc điều trị sẽ có hiệu quả.',
-
-  // Cung Ly - Về tài chính, kinh doanh
-  'khaitiem': 'báo hiệu việc khai trương kinh doanh sẽ thành công. Đây là thời điểm thuận lợi để khởi nghiệp.',
-  'cautai': 'thể hiện tài lộc đang dần cải thiện. Cần kiên nhẫn và có kế hoạch tài chính hợp lý.',
-  'maisuc': 'cho thấy việc mua bán súc vật sẽ có lợi nhuận. Đầu tư chăn nuôi sẽ mang lại hiệu quả.',
-  'phanquynh': 'thể hiện việc chọn mộ phần và phong thủy sẽ thuận lợi cho gia đình.',
-  'hoihuong': 'báo hiệu việc trở về quê hương sẽ thuận lợi. Đây là thời điểm tốt để về thăm gia đình.',
-  'tatai': 'cho thấy việc cho vay mượn tiền sẽ có kết quả tốt. Cần cân nhắc kỹ lưỡng trước khi quyết định.',
-  'phongtruong': 'thể hiện hoạt động cho vay sẽ mang lại lợi nhuận. Cần quản lý rủi ro một cách khôn ngoan.',
-  'dobac': 'cảnh báo về cờ bạc và đầu cơ. Nên tránh xa các hoạt động may rủi để bảo toàn tài sản.',
-
-  // Cung Chấn - Về hôn nhân, gia đình, di chuyển
-  'nhapnhai': 'báo hiệu việc cưới vợ ở rể sẽ thuận lợi. Hôn nhân sẽ hạnh phúc và bền vững.',
-  'cautu': 'cho thấy việc cầu con sẽ có kết quả tốt. Gia đình sẽ được bổ sung thành viên mới.',
-  'xuathanh': 'thể hiện việc đi xa sẽ thuận lợi và an toàn. Chuyến đi sẽ mang lại nhiều may mắn.',
-  'tamquan': 'báo hiệu việc tìm kiếm quê quán tổ tiên sẽ có kết quả. Nguồn gốc gia đình sẽ được làm rõ.',
-  'thuthau': 'cho thấy mùa màng sẽ bội thu. Công việc nông nghiệp sẽ mang lại hiệu quả cao.',
-  'thungu': 'thể hiện việc đánh bắt cá sẽ có kết quả tốt. Hoạt động thủy sản sẽ thuận lợi.',
-  'damong': 'giải thích ý nghĩa giấc mơ. Những điềm báo trong mơ sẽ có ý nghĩa tích cực.',
-  'khauthiet': 'cảnh báo về tranh cãi và xung đột. Cần kiềm chế lời nói để tránh rắc rối.',
-
-  // Cung Tốn - Về kinh doanh, công việc, giấy tờ
-  'sanhy': 'báo hiệu việc kinh doanh buôn bán sẽ phát đạt. Đây là thời điểm tốt để mở rộng hoạt động.',
-  'thachoa': 'cho thấy việc giao dịch hàng hóa sẽ thuận lợi. Các thương vụ sẽ mang lại lợi nhuận.',
-  'khoitao': 'thể hiện việc khởi công xây dựng sẽ thuận lợi. Dự án sẽ hoàn thành đúng tiến độ.',
-  'xuantam': 'báo hiệu việc nuôi tơ tằm sẽ có kết quả tốt. Hoạt động chăn nuôi sẽ mang lại lợi nhuận.',
-  'vanbang': 'cho thấy việc xin cấp giấy tờ bằng cấp sẽ thuận lợi. Thủ tục hành chính sẽ được giải quyết nhanh chóng.',
-  'kienquoi': 'thể hiện việc thăm hỏi người thân sẽ có ý nghĩa tốt. Mối quan hệ sẽ được củng cố.',
-  'giailuong': 'báo hiệu việc nhận lương thưởng sẽ đúng hạn. Thu nhập sẽ được cải thiện.',
-  'totrang': 'cảnh báo về kiện tụng và tranh chấp pháp lý. Cần cẩn trọng trong các giao dịch.',
-
-  // Cung Khảm - Về công danh, hôn nhân, tìm kiếm
-  'napgiam': 'cho thấy việc làm công chức sẽ thuận lợi. Cơ hội nghề nghiệp trong khu vực nhà nước sẽ mở ra.',
-  'thangthien': 'báo hiệu sự thăng tiến trong công việc. Chức vụ và địa vị sẽ được nâng cao.',
-  'hoasu': 'thể hiện việc hòa giải và thương lượng sẽ thành công. Mâu thuẫn sẽ được giải quyết.',
-  'giaoviec': 'cho thấy các giao dịch mua bán sẽ thuận lợi. Kinh doanh sẽ phát triển tốt.',
-  'honnhan': 'dự báo tình duyên thuận lợi. Đây là thời điểm tốt để củng cố mối quan hệ hoặc tìm kiếm tình yêu đích thực.',
-  'thuthiep': 'thể hiện việc cưới vợ lẻ hoặc có thêm mối quan hệ sẽ cần cân nhắc kỹ lưỡng.',
-  'lucgiap': 'báo hiệu việc sinh nở sẽ thuận lợi. Mẹ tròn con vuông, gia đình thêm hạnh phúc.',
-  'tamnhon': 'cho thấy việc tìm kiếm người thân hoặc bạn bè sẽ có kết quả. Những người xa cách sẽ được đoàn tụ.',
-
-  // Cung Cấn - Về tin tức, quan lộ, tài sản
-  'giatin': 'báo hiệu sẽ nhận được tin tức tốt từ gia đình. Những thông tin quan trọng sẽ được biết đến.',
-  'cauquan': 'cho thấy việc cầu quan cầu chức sẽ có kết quả. Cơ hội thăng tiến sẽ xuất hiện.',
-  'trihoa': 'thể hiện việc tích trữ hàng hóa sẽ có lợi. Đầu tư dài hạn sẽ mang lại hiệu quả.',
-  'caotrang': 'báo hiệu việc kiện cáo sẽ có kết quả thuận lợi. Công lý sẽ được thực thi.',
-  'noplai': 'cho thấy việc làm lính hoặc công chức sẽ thuận lợi. Nghề nghiệp ổn định sẽ được tìm thấy.',
-  'diensan': 'thể hiện việc mua bán đất đai sẽ có lợi. Bất động sản sẽ tăng giá.',
-  'thaoboc': 'báo hiệu việc truy tìm người trốn sẽ có kết quả. Những điều ẩn giấu sẽ được phát hiện.',
-  'canquan': 'cho thấy việc theo quan làm việc sẽ thuận lợi. Cơ hội nghề nghiệp tốt sẽ xuất hiện.',
-
-  // Cung Khôn - Về gia đạo, sức khỏe, mất mát
-  'giatrach': 'thể hiện gia đình hòa thuận, hạnh phúc. Các mối quan hệ trong gia đình sẽ ngày càng bền chặt.',
-  'thonguon': 'cho biết về tuổi thọ và sức khỏe. Cần chú ý chăm sóc sức khỏe để có cuộc sống lâu dài.',
-  'tauthuat': 'cảnh báo về việc trốn chạy hoặc lánh mặt. Cần đối diện với vấn đề thay vì trốn tránh.',
-  'thatvat': 'thể hiện việc tìm lại đồ vật thất lạc. Những thứ đã mất có thể sẽ được tìm thấy.',
-  'hieploa': 'cảnh báo về các giao dịch mua bán có thể gặp rủi ro. Cần cẩn trọng khi kinh doanh.',
-  'hanhnhon': 'cho thấy việc đi xa của người thân sẽ bình an. Chuyến đi sẽ thuận lợi và may mắn.',
-  'giaigiao': 'báo hiệu việc giải quyết tội lỗi sẽ có kết quả tốt. Công lý sẽ được thực thi.',
-  'thunghe': 'thể hiện việc làm nghề thủ công sẽ phát đạt. Kỹ năng chuyên môn sẽ mang lại thu nhập ổn định.'
-};
-
 interface DiBocResult {
   topic: string;
   number: number;
   hexagramNumber: string;
   hexagramName: string;
-  interpretation: string;
+  prediction: DibocPrediction | null;
+  hasValidPrediction: boolean;
 }
 
 export function DiBocTienTri() {
@@ -252,6 +174,10 @@ export function DiBocTienTri() {
   const [error, setError] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [showStats, setShowStats] = useState(false);
+
+  // Get prediction statistics
+  const predictionStats = getPredictionStats();
 
   // Toggle expanded state for topic groups
   const toggleGroup = (groupName: string) => {
@@ -329,14 +255,18 @@ export function DiBocTienTri() {
       // Tính toán kết quả
       const { hexagramNumber, hexagramName } = calculateHexagram(selectedTopic, finalNumber);
       const topicName = TOPICS[selectedTopic as keyof typeof TOPICS].name;
-      const interpretation = SAMPLE_INTERPRETATIONS[selectedTopic as keyof typeof SAMPLE_INTERPRETATIONS];
+      
+      // Lấy dữ liệu tiên tri từ JSON
+      const prediction = getPredictionById(hexagramNumber);
+      const hasValidPrediction = prediction !== null;
 
       const newResult: DiBocResult = {
         topic: topicName,
         number: finalNumber,
         hexagramNumber,
         hexagramName,
-        interpretation: `Kết quả gieo quẻ ${hexagramNumber} trong lĩnh vực ${topicName}: Quẻ ${hexagramName} ${interpretation}`
+        prediction,
+        hasValidPrediction
       };
 
       setResult(newResult);
@@ -377,6 +307,46 @@ export function DiBocTienTri() {
               ghi lại các chiêm nghiệm của quẻ Kinh Dịch đối với các sự việc cần hỏi. 
               Đây là phương pháp bói toán trực tiếp, cho kết quả rõ ràng và chính xác với 64 chủ đề khác nhau.
             </p>
+            
+            {/* Data Statistics */}
+            <div className="mt-4 flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                <FileText className="w-4 h-4" />
+                <span>Dữ liệu: {predictionStats.total} quẻ tiên tri hợp lệ</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowStats(!showStats)}
+                className="text-xs"
+              >
+                {showStats ? 'Ẩn' : 'Hiện'} thống kê
+                {showStats ? <ChevronUp className="w-3 h-3 ml-1" /> : <ChevronDown className="w-3 h-3 ml-1" />}
+              </Button>
+            </div>
+            
+            {showStats && (
+              <div className="mt-3 p-3 bg-white/50 rounded border border-mystical-gold/10">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                  <div className="text-center">
+                    <div className="font-semibold text-mystical-gold">{predictionStats.total}</div>
+                    <div className="text-muted-foreground">Quẻ hợp lệ</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-mystical-gold">{predictionStats.totalInFile}</div>
+                    <div className="text-muted-foreground">Tổng trong file</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-mystical-gold">{predictionStats.validPercentage}%</div>
+                    <div className="text-muted-foreground">Tỷ lệ hợp lệ</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-mystical-gold">512</div>
+                    <div className="text-muted-foreground">Quẻ truyền thống</div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -534,10 +504,15 @@ export function DiBocTienTri() {
                 <Badge variant="outline" className="border-mystical-gold/30">
                   Số {result.number}
                 </Badge>
+                {result.hasValidPrediction && (
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    Có dữ liệu tiên tri
+                  </Badge>
+                )}
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             {/* Hexagram Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 bg-mystical-gold/5 rounded-lg border border-mystical-gold/20">
@@ -563,21 +538,66 @@ export function DiBocTienTri() {
 
             <Separator className="bg-mystical-gold/20" />
 
-            {/* Interpretation */}
-            <div className="p-6 bg-gradient-to-br from-mystical-gold/5 to-yellow-50 rounded-lg border border-mystical-gold/20">
-              <h4 className="font-semibold text-mystical-gold mb-3 flex items-center space-x-2">
-                <Sparkles className="w-4 h-4" />
-                <span>Lời Tiên Tri</span>
-              </h4>
-              <p className="text-muted-foreground leading-relaxed text-lg">
-                {result.interpretation}
-              </p>
-            </div>
+            {/* Prediction Content */}
+            {result.hasValidPrediction && result.prediction ? (
+              <div className="space-y-4">
+                {/* Tên quẻ từ JSON */}
+                <div className="p-4 bg-gradient-to-br from-mystical-gold/5 to-yellow-50 rounded-lg border border-mystical-gold/20">
+                  <h4 className="font-semibold text-mystical-gold mb-2 flex items-center space-x-2">
+                    <Sparkles className="w-4 h-4" />
+                    <span>Tên Quẻ</span>
+                  </h4>
+                  <p className="text-mystical-dark-purple font-medium text-lg">
+                    {result.prediction.Name}
+                  </p>
+                </div>
+
+                {/* Lời quẻ gốc */}
+                <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                  <h4 className="font-semibold text-blue-700 mb-3 flex items-center space-x-2">
+                    <FileText className="w-4 h-4" />
+                    <span>Lời Quẻ</span>
+                  </h4>
+                  <ScrollArea className="max-h-32">
+                    <p className="text-blue-800 leading-relaxed whitespace-pre-wrap">
+                      {result.prediction.original}
+                    </p>
+                  </ScrollArea>
+                </div>
+
+                {/* Dịch nghĩa */}
+                <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                  <h4 className="font-semibold text-green-700 mb-3 flex items-center space-x-2">
+                    <Lightbulb className="w-4 h-4" />
+                    <span>Dịch Nghĩa</span>
+                  </h4>
+                  <ScrollArea className="max-h-40">
+                    <p className="text-green-800 leading-relaxed whitespace-pre-wrap">
+                      {result.prediction.interpretation}
+                    </p>
+                  </ScrollArea>
+                </div>
+              </div>
+            ) : (
+              <div className="p-6 bg-gray-50 rounded-lg border border-gray-200 text-center">
+                <AlertCircle className="w-8 h-8 text-gray-400 mx-auto mb-3" />
+                <h4 className="font-semibold text-gray-600 mb-2">Không có dữ liệu tiên tri</h4>
+                <p className="text-gray-500 text-sm">
+                  Số quẻ {result.hexagramNumber} chưa có dữ liệu tiên tri trong hệ thống. 
+                  Vui lòng thử gieo quẻ khác hoặc liên hệ để cập nhật dữ liệu.
+                </p>
+              </div>
+            )}
 
             {/* Additional Info */}
             <div className="text-center text-sm text-muted-foreground">
               <p>
                 Kết quả dựa trên phương pháp Dị Bốc Tiên Tri của tiên sinh Thiệu Khang Tiết
+                {result.hasValidPrediction && (
+                  <span className="block mt-1 text-green-600">
+                    ✓ Dữ liệu tiên tri được truy xuất từ kho dữ liệu cổ điển
+                  </span>
+                )}
               </p>
             </div>
           </CardContent>
@@ -597,7 +617,7 @@ export function DiBocTienTri() {
                 <li>• Chọn chủ đề cần hỏi bói từ 64 lĩnh vực được phân chia theo 8 cung</li>
                 <li>• Lựa chọn số ngẫu nhiên hoặc tự nhập số từ 1-8</li>
                 <li>• Hệ thống sẽ tra cứu trong bảng cung Bát Quái tương ứng</li>
-                <li>• Nhận kết quả với số quẻ và lời giải thích chi tiết</li>
+                <li>• Nhận kết quả với số quẻ và lời tiên tri chi tiết từ dữ liệu cổ điển</li>
               </ul>
             </div>
             
