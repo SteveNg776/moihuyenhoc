@@ -4,13 +4,10 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   BookOpen, 
   Coins, 
   Sparkles, 
-  History,
   Shuffle,
   Eye
 } from 'lucide-react';
@@ -82,7 +79,6 @@ export default function IChing() {
         {/* Content */}
         {viewMode === 'intro' && (
           <div className="space-y-8">
-            {/* ... Intro Content ... */}
              <Card className="moonrise-card">
               <CardHeader>
                 <CardTitle className="text-2xl text-blue-600 font-semibold">
@@ -107,7 +103,6 @@ export default function IChing() {
               </CardContent>
             </Card>
 
-            {/* Consultation Methods */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="moonrise-card group hover:scale-105 transition-all duration-300 cursor-pointer"
                     onClick={() => setViewMode('coin-toss')}>
@@ -215,7 +210,6 @@ export default function IChing() {
               </Card>
             </div>
 
-            {/* Featured Hexagrams */}
             <Card className="moonrise-card">
               <CardHeader>
                 <CardTitle className="text-xl text-blue-600 font-semibold">
@@ -309,7 +303,8 @@ export default function IChing() {
             )}
 
             <HexagramDisplay 
-              hexagram={currentHexagram} 
+              hexagram={currentHexagram}
+              lines={currentHexagram.lines}
               changedLines={changingLines}
             />
           </div>
