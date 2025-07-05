@@ -28,27 +28,33 @@ export default function IChing() {
   const [question, setQuestion] = useState('');
 
   const handleCoinTossComplete = (lines: boolean[], changingLinesResult: number[]) => {
-  // Convert the boolean array to a number array
-  const numericLines = lines.map(line => (line ? 1 : 0));
+    // Convert the boolean array to a number array
+    const numericLines = lines.map(line => (line ? 1 : 0));
 
-  // Pass the numeric array to the function
-  const hexagram = getHexagramByLines(numericLines);
+    // Pass the numeric array to the function
+    const hexagram = getHexagramByLines(numericLines);
 
-  if (hexagram) {
-    setCurrentHexagram(hexagram);
-    setChangingLines(changingLinesResult);
-  }
-};
+    if (hexagram) {
+      setCurrentHexagram(hexagram);
+      setChangingLines(changingLinesResult);
+      setViewMode('hexagram'); // Chuyển sang chế độ xem quẻ khi hoàn thành
+    }
+  };
 
   const handleQuickReading = () => {
     const hexagram = generateRandomHexagram();
-    const randomChangingLines = Math.random() < 0.3 
-      ? [Math.floor(Math.random() * 6) + 1] 
-      : [];
     
-    setCurrentHexagram(hexagram);
-    setChangingLines(randomChangingLines);
-    setViewMode('hexagram');
+    // Chỉ cập nhật trạng thái nếu một quẻ hợp lệ được tạo ra
+    if (hexagram) {
+      const randomChangingLines = Math.random() < 0.3 
+        ? [Math.floor(Math.random() * 6) + 1] 
+        : [];
+      
+      setCurrentHexagram(hexagram);
+      setChangingLines(randomChangingLines);
+      setViewMode('hexagram');
+    }
+    // Nếu hexagram là undefined, không làm gì cả, tránh gây lỗi
   };
 
   const resetReading = () => {
@@ -144,7 +150,7 @@ export default function IChing() {
               </Card>
 
               <Card className="moonrise-card group hover:scale-105 transition-all duration-300 cursor-pointer"
-                    onClick={() => setViewMode('quick-reading')}>
+                    onClick={handleQuickReading}>
                 <CardHeader>
                   <div className="flex items-center justify-between mb-4">
                     <Shuffle className="w-8 h-8 text-purple-400 animate-float" style={{ animationDelay: '0.2s' }} />
@@ -262,6 +268,8 @@ export default function IChing() {
           </div>
         )}
 
+        {/* Chế độ xem này đã bị loại bỏ vì nó không được sử dụng và gây ra sự phức tạp không cần thiết */}
+        {/*
         {viewMode === 'quick-reading' && (
           <div className="space-y-6">
             <Card className="moonrise-card text-center">
@@ -302,6 +310,7 @@ export default function IChing() {
             </Card>
           </div>
         )}
+        */}
 
         {viewMode === 'di-boc' && (
           <div className="space-y-6">
