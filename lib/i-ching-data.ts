@@ -73,10 +73,11 @@ export const getHexagramByLines = (lines: number[]): Hexagram | undefined => {
 
 /**
  * Generates a random hexagram by creating six random lines.
- * @returns A random Hexagram object or undefined if generation fails.
+ * @returns A random Hexagram object and the lines that generated it.
  */
-export const generateRandomHexagram = (): Hexagram | undefined => {
+export const generateRandomHexagram = (): { hexagram: Hexagram | undefined, lines: number[] } => {
   // A coin toss can result in values 6, 7, 8, or 9.
   const lines = Array.from({ length: 6 }, () => Math.floor(Math.random() * 4) + 6);
-  return getHexagramByLines(lines);
+  const hexagram = getHexagramByLines(lines);
+  return { hexagram, lines };
 };
