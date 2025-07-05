@@ -28,13 +28,17 @@ export default function IChing() {
   const [question, setQuestion] = useState('');
 
   const handleCoinTossComplete = (lines: boolean[], changingLinesResult: number[]) => {
-    const hexagram = getHexagramByLines(lines);
-    if (hexagram) {
-      setCurrentHexagram(hexagram);
-      setChangingLines(changingLinesResult);
-      setViewMode('hexagram');
-    }
-  };
+  // Convert the boolean array to a number array
+  const numericLines = lines.map(line => (line ? 1 : 0));
+
+  // Pass the numeric array to the function
+  const hexagram = getHexagramByLines(numericLines);
+
+  if (hexagram) {
+    setCurrentHexagram(hexagram);
+    setChangingLines(changingLinesResult);
+  }
+};
 
   const handleQuickReading = () => {
     const hexagram = generateRandomHexagram();
