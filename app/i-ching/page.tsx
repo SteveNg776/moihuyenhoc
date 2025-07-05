@@ -15,11 +15,11 @@ import {
   Eye
 } from 'lucide-react';
 import { Hexagram, generateRandomHexagram, getHexagramByLines } from '@/lib/i-ching-data';
-import { HexagramDisplay } from '@/components/i-ching/hexagram-display';
+import { HexagramDisplay, HexagramDisplayProps } from '@/components/i-ching/hexagram-display';
 import { CoinToss } from '@/components/i-ching/coin-toss';
 import { DiBocTienTri } from '@/components/i-ching/di-boc-tien-tri';
 
-type ViewMode = 'intro' | 'coin-toss' | 'quick-reading' | 'di-boc' | 'hexagram';
+type ViewMode = 'intro' | 'coin-toss' | 'di-boc' | 'hexagram';
 
 export default function IChing() {
   const [viewMode, setViewMode] = useState<ViewMode>('intro');
@@ -28,23 +28,19 @@ export default function IChing() {
   const [question, setQuestion] = useState('');
 
   const handleCoinTossComplete = (lines: boolean[], changingLinesResult: number[]) => {
-    // Convert the boolean array to a number array
     const numericLines = lines.map(line => (line ? 1 : 0));
-
-    // Pass the numeric array to the function
     const hexagram = getHexagramByLines(numericLines);
 
     if (hexagram) {
       setCurrentHexagram(hexagram);
       setChangingLines(changingLinesResult);
-      setViewMode('hexagram'); // Chuyển sang chế độ xem quẻ khi hoàn thành
+      setViewMode('hexagram');
     }
   };
 
   const handleQuickReading = () => {
     const hexagram = generateRandomHexagram();
     
-    // Chỉ cập nhật trạng thái nếu một quẻ hợp lệ được tạo ra
     if (hexagram) {
       const randomChangingLines = Math.random() < 0.3 
         ? [Math.floor(Math.random() * 6) + 1] 
@@ -54,7 +50,6 @@ export default function IChing() {
       setChangingLines(randomChangingLines);
       setViewMode('hexagram');
     }
-    // Nếu hexagram là undefined, không làm gì cả, tránh gây lỗi
   };
 
   const resetReading = () => {
@@ -87,8 +82,8 @@ export default function IChing() {
         {/* Content */}
         {viewMode === 'intro' && (
           <div className="space-y-8">
-            {/* Introduction */}
-            <Card className="moonrise-card">
+            {/* ... Intro Content ... */}
+             <Card className="moonrise-card">
               <CardHeader>
                 <CardTitle className="text-2xl text-blue-600 font-semibold">
                   Về Kinh Dịch
@@ -268,50 +263,6 @@ export default function IChing() {
           </div>
         )}
 
-        {/* Chế độ xem này đã bị loại bỏ vì nó không được sử dụng và gây ra sự phức tạp không cần thiết */}
-        {/*
-        {viewMode === 'quick-reading' && (
-          <div className="space-y-6">
-            <Card className="moonrise-card text-center">
-              <CardHeader>
-                <CardTitle className="text-2xl text-blue-600 font-semibold">
-                  Đọc Nhanh
-                </CardTitle>
-                <CardDescription>
-                  Tập trung vào câu hỏi của bạn và nhận hướng dẫn tức thì
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="max-w-md mx-auto">
-                  <textarea
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    placeholder="Bạn tìm kiếm hướng dẫn gì? (tùy chọn)"
-                    className="w-full p-3 bg-white/50 border border-white/20 rounded-lg focus:border-blue-500 focus:outline-none resize-none"
-                    rows={3}
-                  />
-                </div>
-                <Button
-                  onClick={handleQuickReading}
-                  size="lg"
-                  className="moonrise-button"
-                >
-                  <Eye className="w-5 h-5 mr-2" />
-                  Hiển Thị Quẻ Của Bạn
-                </Button>
-                <Button
-                  onClick={resetReading}
-                  variant="ghost"
-                  className="hover:bg-blue-50"
-                >
-                  Quay Lại Giới Thiệu
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-        */}
-
         {viewMode === 'di-boc' && (
           <div className="space-y-6">
             <Button
@@ -359,7 +310,7 @@ export default function IChing() {
 
             <HexagramDisplay 
               hexagram={currentHexagram} 
-              changingLines={changingLines}
+              changedLines={changingLines}
             />
           </div>
         )}
