@@ -11,7 +11,7 @@ import {
   Shuffle,
   Eye
 } from 'lucide-react';
-import { Hexagram, generateRandomHexagram, getHexagramByLines } from '@/lib/i-ching-data';
+import { Hexagram, getHexagramByLines } from '@/lib/i-ching-data';
 import { HexagramDisplay } from '@/components/i-ching/hexagram-display';
 import { CoinToss } from '@/components/i-ching/coin-toss';
 import { DiBocTienTri } from '@/components/i-ching/di-boc-tien-tri';
@@ -21,6 +21,7 @@ type ViewMode = 'intro' | 'coin-toss' | 'di-boc' | 'hexagram';
 export default function IChing() {
   const [viewMode, setViewMode] = useState<ViewMode>('intro');
   const [currentHexagram, setCurrentHexagram] = useState<Hexagram | null>(null);
+  const [currentLines, setCurrentLines] = useState<number[]>([]); // State mới để lưu các vạch
   const [changingLines, setChangingLines] = useState<number[]>([]);
   const [question, setQuestion] = useState('');
 
@@ -30,20 +31,28 @@ export default function IChing() {
 
     if (hexagram) {
       setCurrentHexagram(hexagram);
+      setCurrentLines(numericLines); // Lưu các vạch vào state
       setChangingLines(changingLinesResult);
       setViewMode('hexagram');
     }
   };
 
   const handleQuickReading = () => {
-    const hexagram = generateRandomHexagram();
+    // Tự tạo 6 vạch ngẫu nhiên (0 hoặc 1)
+    const randomLines = Array.from({ length: 6 }, () => Math.round(Math.random()));
+    
+    // Tìm quẻ dựa trên các vạch ngẫu nhiên
+    const hexagram = getHexagramByLines(randomLines);
     
     if (hexagram) {
+      // Tạo các vạch biến đổi ngẫu nhiên
       const randomChangingLines = Math.random() < 0.3 
         ? [Math.floor(Math.random() * 6) + 1] 
         : [];
       
+      // Cập nhật tất cả state cần thiết
       setCurrentHexagram(hexagram);
+      setCurrentLines(randomLines); // Lưu các vạch vào state
       setChangingLines(randomChangingLines);
       setViewMode('hexagram');
     }
@@ -52,12 +61,13 @@ export default function IChing() {
   const resetReading = () => {
     setViewMode('intro');
     setCurrentHexagram(null);
+    setCurrentLines([]); // Reset state của các vạch
     setChangingLines([]);
     setQuestion('');
   };
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="container mx-auto max-w-6xl">
         {/* Header */}
         <div className="text-center mb-12">
@@ -79,7 +89,7 @@ export default function IChing() {
         {/* Content */}
         {viewMode === 'intro' && (
           <div className="space-y-8">
-             <Card className="moonrise-card">
+             <Card className="shadow-lg border-gray-200">
               <CardHeader>
                 <CardTitle className="text-2xl text-blue-600 font-semibold">
                   Về Kinh Dịch
@@ -89,12 +99,12 @@ export default function IChing() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-gray-600">
+                <p className="text-gray-700">
                   Kinh Dịch (易經) là một văn bản bói toán cổ đại của Trung Quốc có niên đại hơn 3.000 năm. 
                   Nó bao gồm 64 quẻ, mỗi quẻ được tạo thành từ sáu vạch có thể là đứt (âm) hoặc liền (dương). 
                   Những quẻ này đại diện cho các tình huống khác nhau trong cuộc sống và cung cấp hướng dẫn để hiểu về sự thay đổi và đưa ra quyết định.
                 </p>
-                <p className="text-gray-600">
+                <p className="text-gray-700">
                   Oracle hoạt động bằng cách tạo ra một quẻ thông qua việc tung đồng xu hoặc que cỏ, 
                   sau đó được giải thích theo trí tuệ cổ đại có trong văn bản. 
                   Mỗi quẻ có nhiều lớp ý nghĩa, bao gồm giải thích chung, 
@@ -104,12 +114,12 @@ export default function IChing() {
             </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="moonrise-card group hover:scale-105 transition-all duration-300 cursor-pointer"
+              <Card className="shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer"
                     onClick={() => setViewMode('coin-toss')}>
                 <CardHeader>
                   <div className="flex items-center justify-between mb-4">
-                    <Coins className="w-8 h-8 text-blue-400 animate-float" />
-                    <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-blue-200">
+                    <Coins className="w-8 h-8 text-blue-500" />
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200">
                       Truyền Thống
                     </Badge>
                   </div>
@@ -122,125 +132,50 @@ export default function IChing() {
                     Sử dụng phương pháp ba đồng xu truyền thống để tạo quẻ của bạn. 
                     Phương pháp này bao gồm việc tung ba đồng xu sáu lần để xây dựng quẻ từ dưới lên trên.
                   </CardDescription>
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      <span>Phương pháp truyền thống chính thống nhất</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      <span>Xác định các vạch thay đổi</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      <span>Hoạt ảnh đồng xu tương tác</span>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
 
-              <Card className="moonrise-card group hover:scale-105 transition-all duration-300 cursor-pointer"
+              <Card className="shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer"
                     onClick={handleQuickReading}>
                 <CardHeader>
                   <div className="flex items-center justify-between mb-4">
-                    <Shuffle className="w-8 h-8 text-purple-400 animate-float" style={{ animationDelay: '0.2s' }} />
-                    <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-blue-200">
+                    <Shuffle className="w-8 h-8 text-purple-500" />
+                    <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200">
                       Nhanh
                     </Badge>
                   </div>
-                  <CardTitle className="text-xl font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
+                  <CardTitle className="text-xl font-semibold text-gray-800 group-hover:text-purple-600 transition-colors">
                     Đọc Tức Thì
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CardDescription className="text-gray-600 mb-6">
                     Nhận ngay một quẻ để được hướng dẫn nhanh chóng. 
-                    Hoàn hảo cho cảm hứng hàng ngày hoặc khi bạn cần câu trả lời nhanh cho câu hỏi của mình.
+                    Hoàn hảo cho cảm hứng hàng ngày hoặc khi bạn cần câu trả lời nhanh.
                   </CardDescription>
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      <span>Tạo quẻ tức thì</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      <span>Giải thích hoàn chỉnh</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      <span>Hoàn hảo cho hướng dẫn hàng ngày</span>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
 
-              <Card className="mystical-card group hover:scale-105 transition-all duration-300 cursor-pointer"
+              <Card className="shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer"
                     onClick={() => setViewMode('di-boc')}>
                 <CardHeader>
                   <div className="flex items-center justify-between mb-4">
-                    <Sparkles className="w-8 h-8 text-mystical-gold animate-float" style={{ animationDelay: '0.4s' }} />
-                    <Badge variant="secondary" className="bg-mystical-gold/10 text-mystical-gold border-mystical-gold/30">
+                    <Sparkles className="w-8 h-8 text-amber-500" />
+                    <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-200">
                       Cổ Đại
                     </Badge>
                   </div>
-                  <CardTitle className="text-xl font-semibold text-gray-800 group-hover:text-mystical-gold transition-colors">
+                  <CardTitle className="text-xl font-semibold text-gray-800 group-hover:text-amber-600 transition-colors">
                     Dị Bốc Tiên Tri
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CardDescription className="text-gray-600 mb-6">
-                    Phương pháp bói toán cổ đại với 512 quẻ tiên tri. 
-                    Sử dụng 8 cung Bát Quái để đưa ra lời tiên tri trực tiếp và chính xác.
+                    Phương pháp bói toán cổ đại với 512 quẻ tiên tri, đưa ra lời tiên tri trực tiếp và chính xác cho 6 lĩnh vực.
                   </CardDescription>
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-mystical-gold rounded-full"></div>
-                      <span>512 quẻ tiên tri cổ đại</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-mystical-gold rounded-full"></div>
-                      <span>Kết quả trực tiếp, rõ ràng</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-mystical-gold rounded-full"></div>
-                      <span>6 lĩnh vực chuyên biệt</span>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             </div>
-
-            <Card className="moonrise-card">
-              <CardHeader>
-                <CardTitle className="text-xl text-blue-600 font-semibold">
-                  Quẻ Nổi Bật
-                </CardTitle>
-                <CardDescription>
-                  Khám phá một số quẻ quan trọng nhất trong Kinh Dịch
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[
-                    { id: 1, name: "Quẻ Càn", symbol: "☰", keywords: ["Lãnh Đạo", "Sáng Tạo"] },
-                    { id: 2, name: "Quẻ Khôn", symbol: "☷", keywords: ["Kiên Nhẫn", "Hỗ Trợ"] },
-                    { id: 3, name: "Khó Khăn Ban Đầu", symbol: "☳", keywords: ["Kiên Trì", "Phát Triển"] }
-                  ].map((hex) => (
-                    <div key={hex.id} className="text-center p-4 bg-white/50 rounded-lg border border-white/20">
-                      <div className="text-2xl mb-2">{hex.symbol}</div>
-                      <div className="font-semibold text-blue-600">{hex.name}</div>
-                      <div className="flex justify-center space-x-1 mt-2">
-                        {hex.keywords.map((keyword) => (
-                          <Badge key={keyword} variant="outline" className="text-xs border-blue-300">
-                            {keyword}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </div>
         )}
 
@@ -249,7 +184,7 @@ export default function IChing() {
             <Button
               onClick={resetReading}
               variant="ghost"
-              className="hover:bg-blue-50"
+              className="hover:bg-gray-100"
             >
               ← Quay Lại Giới Thiệu
             </Button>
@@ -262,7 +197,7 @@ export default function IChing() {
             <Button
               onClick={resetReading}
               variant="ghost"
-              className="hover:bg-blue-50"
+              className="hover:bg-gray-100"
             >
               ← Quay Lại Giới Thiệu
             </Button>
@@ -276,16 +211,16 @@ export default function IChing() {
               <Button
                 onClick={resetReading}
                 variant="ghost"
-                className="hover:bg-blue-50"
+                className="hover:bg-gray-100"
               >
                 ← Đọc Mới
               </Button>
               <div className="flex items-center space-x-2">
-                <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-blue-200">
+                <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200">
                   Quẻ {currentHexagram.id}
                 </Badge>
                 {changingLines.length > 0 && (
-                  <Badge variant="outline" className="border-blue-300">
+                  <Badge variant="outline" className="border-purple-300 text-purple-700">
                     {changingLines.length} Vạch Thay Đổi
                   </Badge>
                 )}
@@ -295,8 +230,8 @@ export default function IChing() {
             {question && (
               <Card className="bg-blue-50 border-blue-200">
                 <CardContent className="p-4">
-                  <p className="text-sm text-gray-600">
-                    <span className="font-semibold text-blue-600">Câu Hỏi Của Bạn:</span> {question}
+                  <p className="text-sm text-gray-700">
+                    <span className="font-semibold text-blue-700">Câu Hỏi Của Bạn:</span> {question}
                   </p>
                 </CardContent>
               </Card>
@@ -304,7 +239,7 @@ export default function IChing() {
 
             <HexagramDisplay 
               hexagram={currentHexagram}
-              lines={currentHexagram.lines}
+              lines={currentLines}
               changedLines={changingLines}
             />
           </div>
