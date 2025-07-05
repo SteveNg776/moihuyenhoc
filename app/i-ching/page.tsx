@@ -15,7 +15,7 @@ import {
   Eye
 } from 'lucide-react';
 import { Hexagram, generateRandomHexagram, getHexagramByLines } from '@/lib/i-ching-data';
-import { HexagramDisplay, HexagramDisplayProps } from '@/components/i-ching/hexagram-display';
+import { HexagramDisplay } from '@/components/i-ching/hexagram-display';
 import { CoinToss } from '@/components/i-ching/coin-toss';
 import { DiBocTienTri } from '@/components/i-ching/di-boc-tien-tri';
 
