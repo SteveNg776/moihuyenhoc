@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Coins, RotateCcw } from 'lucide-react';
 
 interface CoinTossProps {
-  onComplete: (lines: boolean[], changingLines: number[]) => void;
+  onComplete: (lines: number[], changingLines: number[]) => void;
 }
 
 interface CoinResult {
@@ -74,7 +74,7 @@ export function CoinToss({ onComplete }: CoinTossProps) {
       setCurrentLine(currentLine + 1);
     } else {
       // All lines complete, generate hexagram
-      const lines = newResults.map(r => r.isYang);
+      const lines = newResults.map(r => r.value);
       const changingLines = newResults
         .map((r, index) => r.isChanging ? index + 1 : null)
         .filter(Boolean) as number[];
