@@ -28,27 +28,26 @@ export default function IChing() {
   const [question, setQuestion] = useState('');
 
   const handleCoinTossComplete = (lines: boolean[], changingLinesResult: number[]) => {
-  // Convert the boolean array to a number array
-  const numericLines = lines.map(line => (line ? 1 : 0));
+    const numericLines = lines.map(line => (line ? 1 : 0));
+    const hexagram = getHexagramByLines(numericLines);
 
-  // Pass the numeric array to the function
-  const hexagram = getHexagramByLines(numericLines);
-
-  if (hexagram) {
-    setCurrentHexagram(hexagram);
-    setChangingLines(changingLinesResult);
-  }
-};
+    if (hexagram) {
+      setCurrentHexagram(hexagram);
+      setChangingLines(changingLinesResult);
+    }
+  };
 
   const handleQuickReading = () => {
     const hexagram = generateRandomHexagram();
-    const randomChangingLines = Math.random() < 0.3 
-      ? [Math.floor(Math.random() * 6) + 1] 
-      : [];
-    
-    setCurrentHexagram(hexagram);
-    setChangingLines(randomChangingLines);
-    setViewMode('hexagram');
+    if (hexagram) {
+      const randomChangingLines = Math.random() < 0.3
+        ? [Math.floor(Math.random() * 6) + 1]
+        : [];
+      
+      setCurrentHexagram(hexagram);
+      setChangingLines(randomChangingLines);
+      setViewMode('hexagram');
+    }
   };
 
   const resetReading = () => {
@@ -350,7 +349,7 @@ export default function IChing() {
 
             <HexagramDisplay 
               hexagram={currentHexagram} 
-              changingLines={changingLines}
+              lines={[]}
             />
           </div>
         )}
